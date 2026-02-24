@@ -42,6 +42,87 @@ const getTodayRange = () => {
   return { startOfDay, endOfDay };
 };
 
+const APPOINTMENT_INCLUDE = {
+  doctor: {
+    include: {
+      clinic: true,
+    },
+  },
+  patient: true,
+};
+
+const normalizeRoles = (roles = []) =>
+  (Array.isArray(roles) ? roles : [roles])
+    .map((role) => String(role ?? "").trim().toLowerCase())
+    .filter(Boolean);
+
+const parseNumberParam = (value, name) => {
+  if (value === undefined || value === null || value === "") {
+    return undefined;
+  }
+  const num = Number(value);
+  if (Number.isNaN(num)) {
+    throw Object.assign(new Error(`${name} must be a valid number`), { status: 400 });
+  }
+  return num;
+};
+
+const parseBooleanParam = (value) => {
+  if (value === undefined || value === null) {
+    return false;
+  }
+  const normalized = String(value).trim().toLowerCase();
+  return normalized === "true" || normalized === "1";
+};
+
+const buildUserAppointmentWhere = ({ user, patientIdFilter, statusFilter, upcoming }) => {
+  const normalizedRoles = normalizeRoles(user.roles);
+  const isDoctor = normalizedRoles.includes("doctor");
+  const isPatient = normalizedRoles.includes("patient");
+
+  if (!isDoctor && !isPatient) {
+    throw Object.assign(new Error("User role not authorized"), { status: 403 });
+  }
+
+  const where = {};
+
+  if (isPatient) {
+    const patientIdClaim = user.patientId ?? user.id;
+    const patientId = parseNumberParam(patientIdClaim, "patientId");
+    if (patientId === undefined) {
+      throw Object.assign(new Error("Unable to resolve patient identity"), { status: 400 });
+    }
+    where.patientId = patientId;
+  } else if (isDoctor) {
+    const doctorIdClaim = user.doctorId ?? user.id;
+    const doctorId = parseNumberParam(doctorIdClaim, "doctorId");
+    if (doctorId === undefined) {
+      throw Object.assign(new Error("Unable to resolve doctor identity"), { status: 400 });
+    }
+    where.doctorId = doctorId;
+    if (patientIdFilter !== undefined) {
+      where.patientId = patientIdFilter;
+    }
+  }
+
+  if (statusFilter) {
+    where.status = statusFilter;
+  }
+
+  if (upcoming) {
+    // Use start of today so that appointments booked for today still appear;
+    // exclude already-finished or cancelled appointments
+    const startOfToday = new Date();
+    startOfToday.setUTCHours(0, 0, 0, 0);
+    where.date = { gte: startOfToday };
+    if (!statusFilter) {
+      where.status = { notIn: ["COMPLETED", "CANCELLED"] };
+    }
+  }
+
+  return where;
+};
+
 export const listAppointments = async (filters = {}) => {
   return prisma.appointment.findMany({
     where: filters,
@@ -54,6 +135,49 @@ export const listAppointments = async (filters = {}) => {
       patient: true,
     },
   });
+};
+
+export const listAppointmentsForUser = async ({ user, filters = {}, pagination = {} }) => {
+  const patientIdFilter = parseNumberParam(filters.patientId, "patientId");
+  const statusFilter = typeof filters.status === "string" && filters.status.trim()
+    ? filters.status.trim()
+    : undefined;
+  const upcoming = parseBooleanParam(filters.upcoming);
+
+  const where = buildUserAppointmentWhere({
+    user,
+    patientIdFilter,
+    statusFilter,
+    upcoming,
+  });
+
+  const parsedPage = Number.parseInt(pagination.page, 10);
+  const parsedLimit = Number.parseInt(pagination.limit, 10);
+  const page = Number.isFinite(parsedPage) && parsedPage > 0 ? parsedPage : 1;
+  const limit = Number.isFinite(parsedLimit)
+    ? Math.min(Math.max(parsedLimit, 1), 100)
+    : 25;
+  const skip = (page - 1) * limit;
+
+  const total = await prisma.appointment.count({ where });
+  const items = await prisma.appointment.findMany({
+    where,
+    include: APPOINTMENT_INCLUDE,
+    orderBy: {
+      date: "asc",
+    },
+    skip,
+    take: limit,
+  });
+
+  return {
+    items,
+    meta: {
+      total,
+      page,
+      limit,
+    },
+  };
 };
 
 export const createAppointmentRecord = async (payload) => {

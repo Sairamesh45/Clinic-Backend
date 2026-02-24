@@ -31,8 +31,10 @@ model Doctor {
   clinicId  Int
   createdAt DateTime @default(now())
 
-  clinic      Clinic        @relation(fields: [clinicId], references: [id])
+  clinic       Clinic        @relation(fields: [clinicId], references: [id])
   appointments Appointment[]
+  vitals       Vital[]
+  user         User?
 }
 
 model Patient {
@@ -42,6 +44,8 @@ model Patient {
   createdAt DateTime @default(now())
 
   appointments Appointment[]
+  vitals       Vital[]
+  user         User?
 }
 
 model Appointment {
@@ -63,4 +67,55 @@ model Appointment {
   @@unique([doctorId, patientId, dateOnly])
   @@index([doctorId, date])
   @@index([status])
+}
+
+model Vital {
+  id          Int      @id @default(autoincrement())
+  patientId   Int
+  doctorId    Int?
+  systolic    Int?
+  diastolic   Int?
+  heartRate   Int?
+  temperature Float?
+  respiration Int?
+  notes       String?
+  recordedAt  DateTime @default(now())
+
+  patient Patient @relation(fields: [patientId], references: [id])
+  doctor  Doctor? @relation(fields: [doctorId], references: [id])
+
+  @@index([patientId])
+  @@index([doctorId])
+}
+
+model User {
+  id             Int            @id @default(autoincrement())
+  email          String         @unique
+  name           String?
+  password       String
+  roles          String?
+  phone          String?
+  profilePicture String?
+  patientId      Int?           @unique
+  doctorId       Int?           @unique
+  createdAt      DateTime       @default(now())
+  notifications  Notification[]
+
+  patient Patient? @relation(fields: [patientId], references: [id])
+  doctor  Doctor?  @relation(fields: [doctorId], references: [id])
+}
+
+model Notification {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  title     String
+  message   String?
+  read      Boolean  @default(false)
+  payload   Json?
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([createdAt])
 }

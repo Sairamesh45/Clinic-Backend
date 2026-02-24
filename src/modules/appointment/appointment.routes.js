@@ -1,4 +1,5 @@
 import express from "express";
+import authenticate from "../../middleware/authenticate.js";
 import {
   createAppointment,
   getAppointments,
@@ -11,9 +12,9 @@ import {
 
 const router = express.Router();
 
-router.get("/", getAppointments);
+router.get("/", authenticate, getAppointments);
 router.get("/queue/:doctorId", getQueue);
-router.post("/", createAppointment);
+router.post("/", authenticate, createAppointment);
 router.put("/:id/arrive", arriveAppointment);
 router.post("/:doctorId/next", takeNextPatient);
 router.put("/:id/complete", completeAppointment);

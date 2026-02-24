@@ -25,6 +25,8 @@ describe("Appointments integration tests", () => {
 
   before(async () => {
     await prisma.appointment.deleteMany();
+    await prisma.vital.deleteMany();
+    await prisma.notification.deleteMany();
     await prisma.patient.deleteMany();
     await prisma.doctor.deleteMany();
 
@@ -39,6 +41,8 @@ describe("Appointments integration tests", () => {
 
   after(async () => {
     await prisma.appointment.deleteMany();
+    await prisma.vital.deleteMany();
+    await prisma.notification.deleteMany();
     await prisma.patient.deleteMany();
     await prisma.doctor.deleteMany();
     await prisma.$disconnect();
