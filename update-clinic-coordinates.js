@@ -3,43 +3,43 @@ import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
 
 async function addCoordinatesToClinics() {
-  console.log('Adding coordinates to existing clinics...');
+  console.log('Adding coordinates to existing clinics (Vellore area)...');
 
   try {
-    // Sample coordinates for New York City area for testing
+    // Real healthcare locations near Vellore, Tamil Nadu
     const clinicUpdates = [
       {
         name: 'City Care Medical Center',
-        latitude: 40.7589,
-        longitude: -73.9851,
+        latitude: 12.9165,
+        longitude: 79.1325,
         rating: 4.7,
         patientCount: 1250
       },
       {
         name: 'Sunrise Family Clinic',
-        latitude: 40.7505,
-        longitude: -73.9934,
+        latitude: 12.9243,
+        longitude: 79.1353,
         rating: 4.3,
         patientCount: 850
       },
       {
         name: 'HealthPlus Multispecialty Hospital',
-        latitude: 40.7614,
-        longitude: -73.9776,
+        latitude: 12.9345,
+        longitude: 79.1187,
         rating: 4.8,
         patientCount: 2100
       },
       {
         name: 'Green Valley Wellness Center',
-        latitude: 40.7549,
-        longitude: -73.9840,
+        latitude: 12.9080,
+        longitude: 79.1420,
         rating: 4.2,
         patientCount: 650
       },
       {
         name: 'Quick Care Walk-In Clinic',
-        latitude: 40.7580,
-        longitude: -73.9865,
+        latitude: 12.9710,
+        longitude: 79.1590,
         rating: 4.1,
         patientCount: 320
       }
