@@ -25,6 +25,8 @@ model Clinic {
   patientCount Int?     @default(0)
   createdAt    DateTime @default(now())
 
+  clinicHours ClinicHour[]
+  doctorAvailabilities DoctorAvailability[]
   doctors Doctor[]
 }
 
@@ -39,6 +41,7 @@ model Doctor {
   appointments Appointment[]
   vitals       Vital[]
   user         User?
+  availabilities DoctorAvailability[]
 }
 
 model Patient {
@@ -122,4 +125,34 @@ model Notification {
 
   @@index([userId])
   @@index([createdAt])
+}
+
+model ClinicHour {
+  id        Int       @id @default(autoincrement())
+  clinicId  Int       @map("clinic_id")
+  dayOfWeek Int       @map("day_of_week")
+  openTime  DateTime? @db.Time @map("open_time")
+  closeTime DateTime? @db.Time @map("close_time")
+  isClosed  Boolean   @default(false) @map("is_closed")
+
+  clinic Clinic @relation(fields: [clinicId], references: [id])
+
+  @@unique([clinicId, dayOfWeek])
+  @@map("clinic_hours")
+}
+
+model DoctorAvailability {
+  id        Int       @id @default(autoincrement())
+  doctorId  Int       @map("doctor_id")
+  clinicId  Int       @map("clinic_id")
+  dayOfWeek Int       @map("day_of_week")
+  startTime DateTime? @db.Time @map("start_time")
+  endTime   DateTime? @db.Time @map("end_time")
+
+  doctor Doctor @relation(fields: [doctorId], references: [id])
+  clinic Clinic @relation(fields: [clinicId], references: [id])
+
+  @@index([doctorId])
+  @@index([clinicId])
+  @@map("doctor_availability")
 }
