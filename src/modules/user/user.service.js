@@ -2,8 +2,18 @@ import prisma from "../../prisma/client.js";
 
 export const getUserById = async (id) => {
   if (!id) return null;
-  const user = await prisma.user.findUnique({ where: { id: Number(id) } });
-  return user;
+  const user = await prisma.user.findUnique({
+    where: { id: Number(id) },
+    include: {
+      doctor: {
+        include: {
+          clinic: true,
+        },
+      },
+      patient: true,
+    },
+  });
+  return attachReceptionClinic(user);
 };
 
 export const toSafeUser = (user) => {
@@ -13,6 +23,37 @@ export const toSafeUser = (user) => {
   // shallow copy to avoid mutating original
   const { password, ...safe } = user;
   return safe;
+};
+
+export const attachReceptionClinic = async (user) => {
+  if (!user) return null;
+  const roles = String(user.roles || "").toLowerCase();
+  if (!roles.includes("reception")) return user;
+
+  // Infer clinic by receptionist email domain based on seed data
+  const email = String(user.email || "").toLowerCase();
+  const candidates = [
+    { key: "citycare", nameFragment: "City Care" },
+    { key: "sunrise", nameFragment: "Sunrise" },
+    { key: "healthplus", nameFragment: "HealthPlus" },
+    { key: "greenvalley", nameFragment: "Green Valley" },
+    { key: "quickcare", nameFragment: "Quick Care" },
+  ];
+
+  const match = candidates.find((c) => email.includes(c.key));
+  if (!match) return user;
+
+  const clinic = await prisma.clinic.findFirst({
+    where: { name: { contains: match.nameFragment, mode: "insensitive" } },
+  });
+
+  if (!clinic) return user;
+
+  return {
+    ...user,
+    receptionClinicId: clinic.id,
+    receptionClinic: clinic,
+  };
 };
 
 const validateStringField = (value, name) => {

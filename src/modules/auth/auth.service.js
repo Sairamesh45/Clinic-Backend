@@ -1,7 +1,7 @@
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import prisma from "../../prisma/client.js";
-import { toSafeUser } from "../user/user.service.js";
+import { toSafeUser, attachReceptionClinic } from "../user/user.service.js";
 import { createHttpError } from "../../utils/httpError.js";
 
 const normalizeEmail = (value) => {
@@ -71,7 +71,7 @@ export const login = async ({ identifier, password }) => {
     where: { email },
     include: {
       patient: true,
-      doctor: true,
+      doctor: { include: { clinic: true } },
     }
   });
   if (!user) {
@@ -87,11 +87,12 @@ export const login = async ({ identifier, password }) => {
     doctorId: user.doctor?.id || user.doctorId,
   };
 
-  const token = signToken(userWithIds);
+  const userWithClinic = await attachReceptionClinic(userWithIds);
+  const token = signToken(userWithClinic);
   return {
     token,
     role: user.roles,
-    user: toSafeUser(userWithIds),
+    user: toSafeUser(userWithClinic),
   };
 };
 
