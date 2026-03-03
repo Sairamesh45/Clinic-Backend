@@ -60,34 +60,40 @@ const ensurePassword = async (candidate, hash) => {
 
 export const login = async ({ identifier, password, phoneNumber }) => {
   const email = normalizeEmail(identifier);
-  if (!email) {
-    throw createHttpError(400, "Email is required");
+  const phone = phoneNumber ? String(phoneNumber).trim() : null;
+
+  if (!email && !phone) {
+    throw createHttpError(400, "Email or phone number is required");
   }
   if (!password) {
     throw createHttpError(400, "Password is required");
   }
-  if (!phoneNumber || !String(phoneNumber).trim()) {
-    throw createHttpError(400, "Phone number is required");
+
+  // Look up user by email or phone
+  let user;
+  if (email) {
+    user = await prisma.user.findUnique({
+      where: { email },
+      include: {
+        patient: true,
+        doctor: { include: { clinic: true } },
+      },
+    });
+  } else {
+    user = await prisma.user.findUnique({
+      where: { phone },
+      include: {
+        patient: true,
+        doctor: { include: { clinic: true } },
+      },
+    });
   }
 
-  const user = await prisma.user.findUnique({ 
-    where: { email },
-    include: {
-      patient: true,
-      doctor: { include: { clinic: true } },
-    }
-  });
   if (!user) {
     throw createHttpError(401, "Invalid credentials");
   }
 
   await ensurePassword(password, user.password);
-
-  // Save / update the phone number in the database
-  await prisma.user.update({
-    where: { id: user.id },
-    data: { phone: String(phoneNumber).trim() },
-  });
 
   // Add patientId/doctorId to user object before signing token
   const userWithIds = {
@@ -105,7 +111,7 @@ export const login = async ({ identifier, password, phoneNumber }) => {
   };
 };
 
-export const register = async ({ name, identifier, password, role }) => {
+export const register = async ({ name, identifier, password, role, phoneNumber }) => {
   const email = normalizeEmail(identifier);
   if (!email) {
     throw createHttpError(400, "Email is required");
@@ -115,6 +121,11 @@ export const register = async ({ name, identifier, password, role }) => {
   }
   if (!password || password.length < 6) {
     throw createHttpError(400, "Password must be at least 6 characters");
+  }
+
+  const phone = phoneNumber ? String(phoneNumber).trim() : null;
+  if (!phone) {
+    throw createHttpError(400, "Phone number is required");
   }
 
   const hashed = await bcrypt.hash(password, 10);
@@ -136,7 +147,7 @@ export const register = async ({ name, identifier, password, role }) => {
         patientId = patient.id;
       }
 
-      // Create user with optional patient link
+      // Create user with optional patient link and phone number
       return await tx.user.create({
         data: {
           name: name.trim(),
@@ -144,6 +155,7 @@ export const register = async ({ name, identifier, password, role }) => {
           password: hashed,
           roles: userRole,
           patientId,
+          phone,
         },
       });
     });
@@ -151,6 +163,10 @@ export const register = async ({ name, identifier, password, role }) => {
     return toSafeUser(user);
   } catch (error) {
     if (error?.code === "P2002") {
+      const target = error?.meta?.target;
+      if (target?.includes('phone')) {
+        throw createHttpError(409, "Phone number already registered");
+      }
       throw createHttpError(409, "Email already registered");
     }
     throw error;
