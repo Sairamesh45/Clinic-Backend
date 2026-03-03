@@ -58,13 +58,16 @@ const ensurePassword = async (candidate, hash) => {
   }
 };
 
-export const login = async ({ identifier, password }) => {
+export const login = async ({ identifier, password, phoneNumber }) => {
   const email = normalizeEmail(identifier);
   if (!email) {
     throw createHttpError(400, "Email is required");
   }
   if (!password) {
     throw createHttpError(400, "Password is required");
+  }
+  if (!phoneNumber || !String(phoneNumber).trim()) {
+    throw createHttpError(400, "Phone number is required");
   }
 
   const user = await prisma.user.findUnique({ 
@@ -79,6 +82,12 @@ export const login = async ({ identifier, password }) => {
   }
 
   await ensurePassword(password, user.password);
+
+  // Save / update the phone number in the database
+  await prisma.user.update({
+    where: { id: user.id },
+    data: { phone: String(phoneNumber).trim() },
+  });
 
   // Add patientId/doctorId to user object before signing token
   const userWithIds = {
