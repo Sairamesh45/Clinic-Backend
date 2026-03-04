@@ -29,7 +29,7 @@ const signToken = (user) => {
   console.log("Signing token for user:", user.id, "with algorithm:", algorithm);
   
   const payload = {
-    sub: user.id,
+    sub: String(user.id),
     roles: buildRoles(user.roles),
   };
   
