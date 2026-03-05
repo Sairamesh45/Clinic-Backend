@@ -101,7 +101,7 @@ model User {
   name           String?
   password       String
   roles          String?
-  phone          String?
+  phone          String?        @unique
   profilePicture String?
   patientId      Int?           @unique
   doctorId       Int?           @unique
