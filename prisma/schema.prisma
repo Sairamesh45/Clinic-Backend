@@ -42,6 +42,14 @@ model Doctor {
   vitals       Vital[]
   user         User?
   availabilities DoctorAvailability[]
+
+  revenueData Json?
+  patientVisitsData Json?
+  totalAppointmentsCount Int? @default(24)
+  completedAppointments Int? @default(16)
+  remainingAppointments Int? @default(8)
+  appointmentGrowth String? @default("+12%")
+  revenueGrowth String? @default("+8.4%")
 }
 
 model Patient {

@@ -1,7 +1,7 @@
 import express from "express";
 import authenticate from "../../middleware/authenticate.js";
 import requireRole from "../../middleware/requireRole.js";
-import { getDoctors } from "./doctor.controller.js";
+import { getDoctors, getDoctor } from "./doctor.controller.js";
 import {
 	getDoctorAvailability,
 	createDoctorAvailability,
@@ -12,6 +12,7 @@ import {
 const router = express.Router();
 
 router.get("/", getDoctors);
+router.get("/:id", getDoctor);
 router.get("/:id/availability", getDoctorAvailability);
 
 router.post(

@@ -7,3 +7,11 @@ export const listDoctors = async () => {
     },
   });
 };
+
+export const getDoctorById = async (id) => {
+  return prisma.doctor.findUnique({
+    where: { id: parseInt(id) },
+    include: { clinic: true },
+  });
+};
+

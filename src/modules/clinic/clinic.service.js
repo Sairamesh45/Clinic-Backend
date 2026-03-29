@@ -86,6 +86,7 @@ export const listClinics = async () => {
         longitude: clinic.longitude,
         rating: clinic.rating || 4.5,
         patientCount: clinic.patientCount || 0,
+        facilityType: clinic.facilityType || 'clinic',
         doctors: clinic.doctors,
         stats,
       };
@@ -129,6 +130,7 @@ export const getNearByClinics = async (userLat, userLng, radius = 50) => {
         longitude: clinic.longitude,
         rating: clinic.rating || 4.5,
         patientCount: clinic.patientCount || 0,
+        facilityType: clinic.facilityType || 'clinic',
         distance: Math.round(distance * 10) / 10, // Round to 1 decimal place
         doctors: clinic.doctors,
         stats,
@@ -174,6 +176,7 @@ export const searchClinics = async (searchQuery) => {
         longitude: clinic.longitude,
         rating: clinic.rating || 4.5,
         patientCount: clinic.patientCount || 0,
+        facilityType: clinic.facilityType || 'clinic',
         doctors: clinic.doctors,
         stats,
       };

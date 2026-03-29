@@ -24,6 +24,7 @@ async function main() {
     data: {
       name: 'City Care Medical Center',
       address: '123 Downtown Ave, Metro City - 2.5 km away',
+      
     },
   });
 
@@ -31,6 +32,7 @@ async function main() {
     data: {
       name: 'Sunrise Family Clinic',
       address: '456 Oak Street, Sunrise District - 3.8 km away',
+      
     },
   });
 
@@ -38,6 +40,7 @@ async function main() {
     data: {
       name: 'HealthPlus Multispecialty Hospital',
       address: '789 Medical Plaza, Central Square - 1.2 km away',
+      
     },
   });
 
@@ -45,6 +48,7 @@ async function main() {
     data: {
       name: 'Green Valley Wellness Center',
       address: '321 Valley Road, Green Park - 4.5 km away',
+      
     },
   });
 
@@ -52,6 +56,7 @@ async function main() {
     data: {
       name: 'Quick Care Walk-In Clinic',
       address: '654 Market Street, Shopping District - 0.8 km away',
+      
     },
   });
 
